@@ -55,7 +55,8 @@ h3{font-size:17px;margin:0 0 4px;font-weight:800}
 /* Bilah lokasi */
 .lok{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .lok b{display:block}
-.cari input{width:100%;min-height:46px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0 14px;font:inherit}
+.cari{display:flex;gap:8px}
+.cari input{flex:1;min-width:0;min-height:46px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0 14px;font:inherit}
 
 /* Ubin kategori: papan petunjuk fasilitas */
 .ubin{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
@@ -130,7 +131,7 @@ ul.rapi li{margin:4px 0}
   <!-- TERDEKAT -->
   <section id="v-terdekat" class="view aktif" aria-label="Terdekat dari Anda">
     <div id="lokbar" class="card lok"></div>
-    <div class="cari"><input id="cari" type="search" placeholder="Cari nama atau alamat penyedia" autocomplete="off" aria-label="Cari penyedia"/></div>
+    <form class="cari" id="formCari" role="search"><input id="cari" type="search" placeholder="Cari tempat di Google Maps, misalnya bengkel las Lembang" autocomplete="off" enterkeyhint="search" aria-label="Cari tempat di Google Maps"/><button class="btn utama" type="submit">Cari</button></form>
     <div id="peringatan"></div>
     <div id="ubin" class="ubin" role="group" aria-label="Pilih kategori"></div>
     <div id="hasil"></div>
@@ -592,7 +593,12 @@ document.addEventListener('click',e=>{
   }
 });
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.pin')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
-$('#cari').addEventListener('input',e=>{S.cari=e.target.value;S.jml=CONFIG.jumlahAwal;renderUbin();renderHasil()});
+$('#formCari').addEventListener('submit',e=>{
+  e.preventDefault();
+  const q=$('#cari').value.trim();
+  if(!q){toast('Ketik nama atau jenis tempat yang dicari.');return}
+  window.open('https://www.google.com/maps/search/?api=1&query='+enc(q),'_blank','noopener');
+});
 
 /* alat uji data */
 $('#btnUjiMuat').addEventListener('click',()=>{
