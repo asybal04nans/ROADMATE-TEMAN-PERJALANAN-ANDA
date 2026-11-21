@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>RoadMate — Teman Perjalanan Anda</title>
+<meta name="description" content="RoadMate menunjukkan penyedia terdekat (SPBU, bengkel, tambal ban, tempat makan, penginapan, rumah sakit) dan informasi jalan untuk pengendara."/>
+<meta name="theme-color" content="#00693E"/>
+<link rel="manifest" href="manifest.webmanifest"/>
+<link rel="icon" href="icons/icon-192.png" type="image/png"/>
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
+<style>
+:root{
+  --green:#00693E; --blue:#0B57A4; --yellow:#FFC72C; --red:#C8102E; --orange:#C96A00;
+  --ink:#14201B; --muted:#53645B; --paper:#EDF0ED; --card:#FFFFFF; --line:#D3DAD5;
+  --accent:#00693E; --on-accent:#FFFFFF; --ok:#0B7A3E; --warn:#B45F00; --bad:#C8102E;
+  --font:"Bahnschrift","DIN Alternate","Roboto","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{--ink:#EAF0EC;--muted:#A3B5AB;--paper:#14181A;--card:#1E2427;--line:#2F3A3E;--accent:#4FD08F;--on-accent:#06281A;--ok:#4FD08F;--warn:#FFB45A;--bad:#FF7D8C}
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.45 var(--font);padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+
+/* Papan nama bergaya rambu jalan tol */
+.papan{background:var(--green);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 16px;position:relative;
+  box-shadow:inset 0 -4px 0 var(--green), inset 0 -6px 0 rgba(255,255,255,.9)}
+.papan-isi{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.papan h1{margin:0;font-size:26px;line-height:1.05;font-weight:800;letter-spacing:-.01em}
+.papan p{margin:3px 0 0;font-size:15px;font-weight:600;color:#FFE08A}
+.papan .logo{flex:none;width:46px;height:46px}
+.papan .kanan{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.status-daring{font-size:12px;font-weight:700;background:rgba(0,0,0,.28);padding:3px 8px;border-radius:99px;display:none}
+.status-daring.show{display:inline-block}
+
+main{max-width:760px;margin:0 auto;padding:14px 14px 8px}
+.view{display:none}.view.aktif{display:block}
+h2{font-size:21px;line-height:1.2;margin:18px 0 8px;font-weight:800}
+h3{font-size:17px;margin:0 0 4px;font-weight:800}
+.muted{color:var(--muted)}
+.kecil{font-size:13px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:10px;border:2px solid var(--accent);background:transparent;color:var(--accent);font-weight:700;cursor:pointer;text-decoration:none}
+.btn.utama{background:var(--accent);color:var(--on-accent)}
+.btn.kuning{background:var(--yellow);border-color:var(--yellow);color:#1b1500}
+.btn.kecil{min-height:38px;padding:0 12px;font-size:14px}
+.btn[disabled]{opacity:.5;cursor:default}
+.baris{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+/* Bilah lokasi */
+.lok{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.lok b{display:block}
+.cari input{width:100%;min-height:46px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0 14px;font:inherit}
+
+/* Ubin kategori: papan petunjuk fasilitas */
+.ubin{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.u{appearance:none;border:0;cursor:pointer;text-align:center;background:var(--blue);color:#fff;border-radius:14px;padding:12px 4px 10px;
+  box-shadow:inset 0 0 0 3px var(--blue), inset 0 0 0 5px #fff;min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.u .ik{font-size:28px;line-height:1}
+.u .nm{font-size:13px;font-weight:800;line-height:1.15}
+.u .jr{font-size:12px;font-weight:600;color:#BFE0FF;min-height:15px}
+.u.terpilih{outline:4px solid var(--yellow);outline-offset:2px}
+.u.darurat{background:var(--red);box-shadow:inset 0 0 0 3px var(--red), inset 0 0 0 5px #fff}
+.u.darurat .jr{color:#FFD3D8}
+
+/* Kartu penyedia */
+.pv{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0}
+.pv-atas{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.pv h3{margin:0}
+.jarak{flex:none;font-weight:800;font-size:18px;color:var(--accent);white-space:nowrap}
+.tag{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:2px 9px;border:1px solid var(--line);margin:4px 6px 0 0;color:var(--muted)}
+.tag.ok{color:var(--ok);border-color:currentColor}.tag.warn{color:var(--warn);border-color:currentColor}.tag.bad{color:var(--bad);border-color:currentColor}
+.pv p{margin:6px 0 0}
+.sumber{font-size:12px;color:var(--muted);margin-top:8px}
+.aksi{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.aksi .btn{flex:1 1 auto}
+.aksi .teks{flex:0 0 auto;border:0;background:none;color:var(--muted);font-size:13px;text-decoration:underline;min-height:38px;cursor:pointer;padding:0 6px}
+
+/* Informasi jalan */
+.ij{border-left:6px solid var(--line);padding-left:12px}
+.ij.ok{border-color:var(--ok)}.ij.warn{border-color:var(--warn)}.ij.bad{border-color:var(--bad)}
+.dua{display:grid;gap:10px}
+
+/* Peta skematis */
+.peta{width:100%;height:auto;display:block;background:#DDE5DF;border-radius:12px;border:1px solid var(--line)}
+@media (prefers-color-scheme:dark){.peta{background:#1A2326}}
+.peta text{font:700 12px var(--font);fill:var(--ink)}
+.peta .pin{cursor:pointer}
+.legenda{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;margin:8px 0 0;color:var(--muted)}
+.legenda i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+
+/* Bilah tab bawah */
+.tab{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom);z-index:5}
+.tab-isi{display:flex;width:100%;max-width:760px}
+.tab button{flex:1;appearance:none;border:0;background:none;cursor:pointer;padding:8px 2px 7px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:60px;color:var(--muted);font-size:12px;font-weight:700;border-top:4px solid transparent}
+.tab button .i{font-size:21px;line-height:1}
+.tab button.aktif{color:var(--accent);border-top-color:var(--yellow)}
+
+.toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#16221C;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;max-width:90%;z-index:9;display:none}
+.toast.show{display:block}
+textarea{width:100%;min-height:110px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px;font:13px/1.4 ui-monospace,Consolas,monospace}
+ul.rapi{padding-left:20px;margin:8px 0}
+ul.rapi li{margin:4px 0}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+@media (min-width:560px){.ubin{grid-template-columns:repeat(5,1fr)}}
+</style>
+</head>
+<body>
+
+<header class="papan">
+  <div class="papan-isi">
+    <svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="9" fill="none" stroke="#fff" stroke-width="3"/><text x="24" y="31" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="25" fill="#fff">R</text><g fill="#FFC72C"><rect x="9" y="37" width="7" height="2.4" rx="1"/><rect x="20.5" y="37" width="7" height="2.4" rx="1"/><rect x="32" y="37" width="7" height="2.4" rx="1"/></g></svg>
+    <div>
+      <h1>RoadMate</h1>
+      <p>Teman Perjalanan Anda</p>
+    </div>
+    <div class="kanan">
+      <span class="status-daring" id="statusDaring">Tanpa internet</span>
+      <button class="btn kuning kecil" id="btnPasang" hidden>Pasang aplikasi</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- TERDEKAT -->
+  <section id="v-terdekat" class="view aktif" aria-label="Terdekat dari Anda">
+    <div id="lokbar" class="card lok"></div>
+    <div class="cari"><input id="cari" type="search" placeholder="Cari nama atau alamat penyedia" autocomplete="off" aria-label="Cari penyedia"/></div>
+    <div id="peringatan"></div>
+    <div id="ubin" class="ubin" role="group" aria-label="Pilih kategori"></div>
+    <div id="hasil"></div>
+  </section>
+
+  <!-- KORIDOR -->
+  <section id="v-koridor" class="view" aria-label="Koridor jalan">
+    <div id="koridorIsi"></div>
+  </section>
+
+  <!-- DARURAT -->
+  <section id="v-darurat" class="view" aria-label="Darurat">
+    <div id="daruratIsi"></div>
+  </section>
+
+  <!-- TERSIMPAN -->
+  <section id="v-simpan" class="view" aria-label="Tersimpan">
+    <h2>Tempat tersimpan</h2>
+    <div id="simpanIsi"></div>
+  </section>
+
+  <!-- INFO -->
+  <section id="v-info" class="view" aria-label="Tentang">
+    <h2>Tentang RoadMate</h2>
+    <div class="card">
+      <p style="margin:0">RoadMate menunjukkan penyedia terdekat dan informasi jalan. Petunjuk arah dan perjalanan dijalankan di Google Maps; RoadMate tidak menyimpan perjalanan Anda.</p>
+    </div>
+    <h2>Pasang di layar utama</h2>
+    <div class="card">
+      <p style="margin:0 0 8px">Di Chrome Android: buka menu ⋮, lalu pilih <b>Pasang aplikasi</b> atau <b>Tambahkan ke layar utama</b>. Setelah terpasang, aplikasi terbuka seperti aplikasi biasa dan tetap menampilkan data terakhir saat sinyal hilang.</p>
+      <button class="btn utama" id="btnPasang2" hidden>Pasang aplikasi sekarang</button>
+    </div>
+    <h2>Privasi</h2>
+    <div class="card">
+      <ul class="rapi" style="margin:0">
+        <li>Lokasi hanya dibaca saat Anda menekan tombol lokasi, dan jarak dihitung di ponsel Anda. Koordinat tidak dikirim ke server RoadMate.</li>
+        <li>Saat Anda menekan tombol Menuju atau Mulai perjalanan, Google Maps terbuka dan berlaku kebijakan Google.</li>
+        <li>Tempat tersimpan hanya disimpan di perangkat ini.</li>
+      </ul>
+    </div>
+    <h2>Sumber data</h2>
+    <div class="card" id="infoData"></div>
+    <h2>Untuk pengelola data</h2>
+    <div class="card">
+      <p style="margin:0 0 8px" class="kecil muted">Alat uji: tempelkan baris CSV penyedia (judul kolom: id, nama, kategori, lat, lng, alamat, telepon, whatsapp, jam_buka, fasilitas, kisaran_harga, wilayah, koridor, sumber, diperbarui, status_verifikasi). Data uji hanya tampil di perangkat ini dan diberi tanda “data uji”.</p>
+      <textarea id="ujiCsv" aria-label="CSV penyedia untuk uji" spellcheck="false" placeholder="id,nama,kategori,lat,lng,alamat,..."></textarea>
+      <div class="baris" style="margin-top:8px">
+        <button class="btn kecil utama" id="btnUjiMuat">Muat data uji</button>
+        <button class="btn kecil" id="btnUjiHapus">Hapus data uji</button>
+      </div>
+      <p class="kecil muted" id="ujiPesan" style="margin:8px 0 0"></p>
+    </div>
+    <p class="kecil muted" style="text-align:center;margin:18px 0">RoadMate • Teman Perjalanan Anda</p>
+  </section>
+</main>
+
+<nav class="tab" aria-label="Menu utama"><div class="tab-isi">
+  <button data-tab="terdekat" class="aktif"><span class="i">📍</span>Terdekat</button>
+  <button data-tab="koridor"><span class="i">🛣️</span>Koridor</button>
+  <button data-tab="darurat"><span class="i">🚑</span>Darurat</button>
+  <button data-tab="simpan"><span class="i">⭐</span>Tersimpan</button>
+  <button data-tab="info"><span class="i">ℹ️</span>Info</button>
+</div></nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============ PENGATURAN (diisi pengelola) ============ */
+const CONFIG = {
+  // Tempel tautan "Terbitkan ke web → CSV" dari tiap tab Google Sheets.
+  sumber: { penyedia: '', infojalan: '', koridor: '', kontak: '' },
+  // Tujuan tombol "Laporkan data keliru". Isi salah satu atau keduanya.
+  kontakAdmin: { wa: '', email: '' },
+  tampilkanBelumVerifikasi: false,
+  batasUsangHari: 180,
+  jarakJauhKm: 50,
+  jumlahAwal: 3
+};
+
+/* ============ KATEGORI ============ */
+const KATEGORI = [
+  {k:'spbu',n:'SPBU',i:'⛽',q:'SPBU',g:'kendaraan'},
+  {k:'spklu',n:'Pengisian listrik',i:'🔌',q:'SPKLU pengisian mobil listrik',g:'kendaraan'},
+  {k:'bengkel',n:'Bengkel',i:'🔧',q:'bengkel motor mobil',g:'kendaraan'},
+  {k:'tambalban',n:'Tambal ban',i:'🛞',q:'tambal ban',g:'kendaraan'},
+  {k:'derek',n:'Derek',i:'🚛',q:'derek mobil',g:'kendaraan'},
+  {k:'parkir',n:'Parkir',i:'🅿️',q:'parkir',g:'kendaraan'},
+  {k:'makan',n:'Tempat makan',i:'🍜',q:'rumah makan',g:'istirahat'},
+  {k:'penginapan',n:'Penginapan',i:'🏨',q:'penginapan',g:'istirahat'},
+  {k:'musala',n:'Musala',i:'🕌',q:'musala masjid',g:'istirahat'},
+  {k:'toilet',n:'Toilet',i:'🚻',q:'toilet umum',g:'istirahat'},
+  {k:'minimarket',n:'Minimarket',i:'🏪',q:'minimarket',g:'istirahat'},
+  {k:'atm',n:'ATM',i:'🏧',q:'ATM',g:'istirahat'},
+  {k:'rs',n:'Rumah sakit',i:'🏥',q:'rumah sakit',g:'darurat'},
+  {k:'apotek',n:'Apotek',i:'💊',q:'apotek',g:'darurat'},
+  {k:'polisi',n:'Polisi',i:'🚓',q:'kantor polisi',g:'darurat'}
+];
+const KAT = Object.fromEntries(KATEGORI.map(x=>[x.k,x]));
+const ALIAS = {'tambal ban':'tambalban','rumah sakit':'rs','rumahsakit':'rs','tempat makan':'makan','rumah makan':'makan','kuliner':'makan','restoran':'makan','pengisian listrik':'spklu','kantor polisi':'polisi','pos polisi':'polisi','masjid':'musala','mushola':'musala','hotel':'penginapan','villa':'penginapan','vila':'penginapan','homestay':'penginapan'};
+const WARNA_G = {kendaraan:'#0B57A4',istirahat:'#00693E',darurat:'#C8102E'};
+
+/* ============ UTILITAS ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const enc=encodeURIComponent;
+const num=v=>{const n=parseFloat(String(v||'').replace(',','.'));return isFinite(n)?n:null};
+const TERVERIFIKASI=['terverifikasi','benar','ya','ok','verified'];
+function normKat(v){const s=String(v||'').trim().toLowerCase();return ALIAS[s]||s.replace(/\s+/g,'')}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove('show'),3200)}
+function tgl(v){
+  const s=String(v||'').trim(); if(!s) return null; let m;
+  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{2}))?/))) return new Date(+m[1],m[2]-1,+m[3],+(m[4]||0),+(m[5]||0));
+  if((m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:[ T](\d{1,2})[:.](\d{2}))?/))) return new Date(+m[3],m[2]-1,+m[1],+(m[4]||0),+(m[5]||0));
+  const d=new Date(s); return isNaN(d)?null:d;
+}
+const fmtTgl=d=>d?d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'';
+const fmtJarak=km=>km<1?Math.round(km*1000/10)*10+' m':km.toFixed(km<10?1:0).replace('.',',')+' km';
+function haversine(a,b,c,d){const R=6371,r=x=>x*Math.PI/180,dl=r(c-a),dg=r(d-b);const h=Math.sin(dl/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+function parseCSV(text){
+  text=String(text).replace(/^﻿/,'');
+  const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true; else if(c===','){row.push(f);f=''}
+    else if(c==='\n'){row.push(f);rows.push(row);row=[];f=''} else if(c!=='\r')f+=c}
+  if(f.length||row.length){row.push(f);rows.push(row)}
+  if(!rows.length) return [];
+  const h=rows.shift().map(x=>x.trim().toLowerCase());
+  return rows.filter(r=>r.some(x=>x.trim())).map(r=>Object.fromEntries(h.map((k,i)=>[k,(r[i]||'').trim()])));
+}
+function statusBuka(t){
+  const s=String(t||'').trim(); if(!s) return null;
+  if(/24\s*jam/i.test(s)) return {buka:true,teks:'Buka 24 jam'};
+  const m=s.match(/(\d{1,2})[.:](\d{2})\s*[-–]\s*(\d{1,2})[.:](\d{2})/);
+  if(!m) return {buka:null,teks:'Jam: '+s};
+  const a=+m[1]*60+ +m[2], b=+m[3]*60+ +m[4], n=new Date(), x=n.getHours()*60+n.getMinutes();
+  const buka=a<=b?(x>=a&&x<b):(x>=a||x<b);
+  const p=(h,mi)=>String(h).padStart(2,'0')+'.'+m[mi];
+  return buka?{buka:true,teks:'Buka sekarang • tutup '+p(m[3],4)}:{buka:false,teks:'Tutup • buka '+p(m[1],2)};
+}
+function tel(v){return String(v||'').replace(/[^\d+]/g,'')}
+function waNo(v){let d=String(v||'').replace(/\D/g,'');if(!d)return '';if(d[0]==='0')d='62'+d.slice(1);return d}
+function gmapsCari(q){return 'https://www.google.com/maps/search/?api=1&query='+enc(q+' terdekat')}
+
+/* ============ STATE & DATA ============ */
+const D={penyedia:[],infojalan:[],koridor:[],kontak:[]};
+const SS={}; // status sumber
+const S={lok:null,kat:'spbu',jml:CONFIG.jumlahAwal,cari:'',tab:'terdekat',koridorId:null,jmlKor:5,
+  simpan:new Set((()=>{try{return JSON.parse(localStorage.getItem('rm_simpan')||'[]')}catch(e){return[]}})())};
+
+async function muatSumber(nama){
+  const url=CONFIG.sumber[nama], ck='rm_cache_'+nama;
+  if(!url) return {rows:[],asal:'belum diatur'};
+  try{
+    const r=await fetch(url,{cache:'no-cache'}); if(!r.ok) throw new Error(r.status);
+    const rows=parseCSV(await r.text());
+    try{localStorage.setItem(ck,JSON.stringify({t:Date.now(),rows}))}catch(e){}
+    return {rows,asal:'terhubung',t:Date.now()};
+  }catch(e){
+    try{const c=JSON.parse(localStorage.getItem(ck)||'null');if(c) return {rows:c.rows,asal:'data tersimpan di perangkat',t:c.t}}catch(_){}
+    return {rows:[],asal:'gagal dimuat'};
+  }
+}
+function olahPenyedia(rows,uji){
+  return rows.map((r,i)=>({id:r.id||('p'+(uji?'u':'')+i),nama:r.nama,kat:normKat(r.kategori),lat:num(r.lat),lng:num(r.lng),alamat:r.alamat,telp:r.telepon,wa:r.whatsapp,jam:r.jam_buka,fasilitas:r.fasilitas,harga:r.kisaran_harga,wilayah:r.wilayah,koridor:r.koridor,sumber:r.sumber,upd:tgl(r.diperbarui),ok:!!uji||TERVERIFIKASI.includes((r.status_verifikasi||'').toLowerCase()),uji:!!uji})).filter(p=>p.nama&&KAT[p.kat]);
+}
+async function muatSemua(){
+  const [a,b,c,d]=await Promise.all(['penyedia','infojalan','koridor','kontak'].map(muatSumber));
+  Object.assign(SS,{penyedia:a,infojalan:b,koridor:c,kontak:d});
+  D.penyedia=olahPenyedia(a.rows,false);
+  try{const u=localStorage.getItem('rm_uji_penyedia');if(u){D.penyedia=D.penyedia.concat(olahPenyedia(parseCSV(u),true))}}catch(e){}
+  D.infojalan=b.rows.map(r=>({id:r.id,kor:r.koridor,ruas:r.ruas,jenis:r.jenis,status:r.status,ket:r.keterangan,mulai:tgl(r.mulai),hingga:tgl(r.berlaku_hingga),sumber:r.sumber,upd:tgl(r.diperbarui),ok:TERVERIFIKASI.includes((r.status_verifikasi||'').toLowerCase())}));
+  D.koridor=c.rows.map(r=>({id:r.id||r.nama,nama:r.nama,asal:r.asal,tujuan:r.tujuan,jenis:r.jenis_jalan,desk:r.deskripsi,singgah:(r.singgah||'').split('|').map(x=>x.trim()).filter(Boolean),gambar:r.gambar_peta,geo:r.jalur_geojson})).filter(k=>k.nama);
+  D.kontak=d.rows.map(r=>({jenis:r.jenis,nama:r.nama,telp:r.telepon,wilayah:r.wilayah,sumber:r.sumber,ver:tgl(r.diverifikasi_pada)})).filter(k=>k.nama&&k.telp);
+}
+const tampil=p=>p.ok||CONFIG.tampilkanBelumVerifikasi;
+function dgn(list){ // tambahkan jarak & urutkan
+  const L=list.map(p=>({...p,d:(S.lok&&p.lat!=null&&p.lng!=null)?haversine(S.lok.lat,S.lok.lng,p.lat,p.lng):null}));
+  L.sort((a,b)=>(a.d==null)-(b.d==null)||(a.d-b.d)||String(a.nama).localeCompare(b.nama,'id'));
+  return L;
+}
+
+/* ============ LOKASI ============ */
+function mintaLokasi(){
+  if(!navigator.geolocation){toast('Peramban ini tidak dapat membaca lokasi.');return}
+  S.mencari=true;renderLokasi();
+  navigator.geolocation.getCurrentPosition(p=>{
+    S.lok={lat:p.coords.latitude,lng:p.coords.longitude,akurasi:p.coords.accuracy,t:Date.now()};S.mencari=false;S.jml=CONFIG.jumlahAwal;renderSemua();
+  },e=>{
+    S.mencari=false;renderLokasi();
+    toast(e.code===1?'Izin lokasi ditolak. Aktifkan izin lokasi untuk situs ini di pengaturan peramban.':'Lokasi belum terbaca. Pastikan GPS aktif lalu coba lagi.');
+  },{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+}
+function renderLokasi(){
+  const el=$('#lokbar');
+  if(S.mencari){el.innerHTML='<div><b>Mencari lokasi…</b><span class="muted kecil">Tunggu beberapa detik</span></div>';return}
+  if(S.lok){el.innerHTML='<div><b>Lokasi terbaca</b><span class="muted kecil">Akurasi sekitar '+Math.round(S.lok.akurasi)+' m • diperbarui '+new Date(S.lok.t).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})+'</span></div><button class="btn kecil" data-aksi="lokasi">Perbarui</button>';return}
+  el.innerHTML='<div><b>Aktifkan lokasi untuk melihat yang terdekat</b><span class="muted kecil">Jarak dihitung di ponsel Anda</span></div><button class="btn utama" data-aksi="lokasi">Gunakan lokasi saya</button>';
+}
+
+/* ============ KARTU PENYEDIA ============ */
+function kartu(p){
+  const k=KAT[p.kat], b=statusBuka(p.jam), ll=p.lat!=null&&p.lng!=null;
+  const tujuan=ll?p.lat+','+p.lng:(p.nama+' '+(p.alamat||''));
+  const nav='https://www.google.com/maps/dir/?api=1&destination='+enc(tujuan)+'&travelmode=driving';
+  const usang=p.upd&&(Date.now()-p.upd.getTime())/864e5>CONFIG.batasUsangHari;
+  const w=waNo(p.wa), t=tel(p.telp), tersimpan=S.simpan.has(p.id);
+  return '<article class="pv"><div class="pv-atas"><div><h3>'+esc(p.nama)+'</h3><div>'
+    +'<span class="tag">'+k.i+' '+esc(k.n)+'</span>'
+    +(b?'<span class="tag '+(b.buka===true?'ok':b.buka===false?'bad':'')+'">'+esc(b.teks)+'</span>':'')
+    +(p.harga?'<span class="tag">'+esc(p.harga)+'</span>':'')
+    +(p.uji?'<span class="tag warn">data uji</span>':(!p.ok?'<span class="tag warn">belum diverifikasi</span>':''))
+    +(usang?'<span class="tag warn">data mungkin sudah lama</span>':'')
+    +'</div></div>'+(p.d!=null?'<div class="jarak">'+fmtJarak(p.d)+'</div>':'')+'</div>'
+    +(p.alamat?'<p class="muted">'+esc(p.alamat)+'</p>':'')
+    +(p.fasilitas?'<p class="kecil">Fasilitas: '+esc(p.fasilitas)+'</p>':'')
+    +'<div class="sumber">'+(p.sumber?'Sumber: '+esc(p.sumber):'Sumber belum dicantumkan')+(p.upd?' • diperbarui '+fmtTgl(p.upd):'')+'</div>'
+    +'<div class="aksi"><a class="btn utama" href="'+nav+'" target="_blank" rel="noopener">Menuju</a>'
+    +(t?'<a class="btn" href="tel:'+esc(t)+'">Telepon</a>':'')
+    +(w?'<a class="btn" href="https://wa.me/'+w+'" target="_blank" rel="noopener">WhatsApp</a>':'')
+    +'<button class="btn" data-aksi="simpan" data-id="'+esc(p.id)+'" aria-pressed="'+tersimpan+'">'+(tersimpan?'★ Tersimpan':'☆ Simpan')+'</button>'
+    +'<button class="teks" data-aksi="lapor" data-id="'+esc(p.id)+'">Laporkan data keliru</button></div></article>';
+}
+
+/* ============ TAB TERDEKAT ============ */
+function renderUbin(){
+  const ada=D.penyedia.filter(tampil), L=dgn(ada);
+  $('#ubin').innerHTML=KATEGORI.map(c=>{
+    const n=L.find(p=>p.kat===c.k&&p.d!=null);
+    return '<button class="u'+(c.g==='darurat'?' darurat':'')+(S.kat===c.k&&!S.cari?' terpilih':'')+'" data-aksi="kat" data-k="'+c.k+'" aria-pressed="'+(S.kat===c.k)+'"><span class="ik">'+c.i+'</span><span class="nm">'+esc(c.n)+'</span><span class="jr">'+(n?fmtJarak(n.d):'')+'</span></button>';
+  }).join('');
+}
+function renderHasil(){
+  const el=$('#hasil'), semua=D.penyedia.filter(tampil);
+  const q=S.cari.trim().toLowerCase();
+  let judul,list,kat=KAT[S.kat];
+  if(q){
+    judul='Hasil pencarian “'+esc(S.cari.trim())+'”';
+    list=dgn(semua.filter(p=>(p.nama+' '+(p.alamat||'')+' '+(p.fasilitas||'')).toLowerCase().includes(q)));
+  }else{
+    judul=esc(kat.n)+' terdekat';
+    list=dgn(semua.filter(p=>p.kat===S.kat));
+  }
+  let h='<div class="baris" style="justify-content:space-between;margin-top:6px"><h2 style="margin:8px 0">'+judul+'</h2></div>';
+  if(!S.lok&&list.length) h+='<div class="card kecil muted">Aktifkan lokasi agar daftar diurutkan dari yang terdekat.</div>';
+  const tamp=list.slice(0,S.jml);
+  h+=tamp.map(kartu).join('');
+  if(list.length>S.jml) h+='<div style="text-align:center;margin:10px 0"><button class="btn" data-aksi="tambah">Tambah ('+(list.length-S.jml)+' lagi)</button></div>';
+  if(S.lok&&tamp.length&&tamp[0].d!=null&&tamp[0].d>CONFIG.jarakJauhKm) h+='<div class="card kecil">Penyedia terdekat di daftar ini berjarak lebih dari '+CONFIG.jarakJauhKm+' km. Coba cari lewat Google Maps untuk hasil yang lebih dekat.</div>';
+  if(!list.length) h+='<div class="card"><b>'+(q?'Tidak ada hasil untuk pencarian ini.':'Belum ada data terverifikasi untuk '+esc(kat.n.toLowerCase())+'.')+'</b><p class="muted kecil" style="margin:6px 0 0">Sementara, cari langsung di Google Maps.</p></div>';
+  if(!q) h+='<div style="margin:10px 0"><a class="btn kuning" style="width:100%" target="_blank" rel="noopener" href="'+gmapsCari(kat.q)+'">Cari '+esc(kat.n.toLowerCase())+' di Google Maps</a></div>';
+  el.innerHTML=h;
+}
+function renderPeringatan(){
+  const e=$('#peringatan');
+  e.innerHTML=D.penyedia.filter(tampil).length?'':'<div class="card kecil">Daftar penyedia terverifikasi untuk wilayah ini belum tersedia. Pilih kategori lalu cari lewat Google Maps.</div>';
+}
+
+/* ============ TAB KORIDOR ============ */
+function cocokKoridor(v,k){const s=String(v||'').trim().toLowerCase();return !!s&&(s===String(k.id).toLowerCase()||s===String(k.nama).toLowerCase())}
+function sevInfo(st){
+  const s=String(st||'').toLowerCase();
+  if(/sebagian|padat|macet|waspada|rawan|licin|antre|lambat/.test(s)) return 'warn';
+  if(/tutup|rusak|longsor|banjir|putus|berlubang/.test(s)) return 'bad';
+  if(/lancar|normal|baik|aman|dibuka/.test(s)) return 'ok';
+  return '';
+}
+function geoCoords(txt){
+  try{let g=JSON.parse(txt);if(g&&g.type==='Feature')g=g.geometry;if(g&&g.type==='FeatureCollection'&&g.features[0])g=g.features[0].geometry;
+    if(g&&g.type==='LineString')g=g.coordinates;else if(g&&g.type==='MultiLineString')g=[].concat(...g.coordinates);else if(g&&g.coordinates)g=g.coordinates;
+    if(Array.isArray(g)&&g.length>1&&g.every(c=>Array.isArray(c)&&c.length>=2&&isFinite(c[0])&&isFinite(c[1]))) return g;}catch(e){}
+  return null;
+}
+function petaSkematis(k,provs){
+  const C=geoCoords(k.geo); if(!C) return '';
+  const W=640,H=320,P=36;
+  let minLng=Infinity,maxLng=-Infinity,minLat=Infinity,maxLat=-Infinity;
+  C.forEach(([x,y])=>{minLng=Math.min(minLng,x);maxLng=Math.max(maxLng,x);minLat=Math.min(minLat,y);maxLat=Math.max(maxLat,y)});
+  const cl=Math.cos((minLat+maxLat)/2*Math.PI/180), dx=Math.max((maxLng-minLng)*cl,1e-6), dy=Math.max(maxLat-minLat,1e-6);
+  const sc=Math.min((W-2*P)/dx,(H-2*P)/dy), ox=(W-dx*sc)/2, oy=(H-dy*sc)/2;
+  const X=lng=>ox+(lng-minLng)*cl*sc, Y=lat=>H-oy-(lat-minLat)*sc;
+  const pts=C.map(([x,y])=>X(x).toFixed(1)+','+Y(y).toFixed(1)).join(' ');
+  const inb=(lat,lng)=>lat>=minLat-dy*.15&&lat<=maxLat+dy*.15&&lng>=minLng-(maxLng-minLng)*.15&&lng<=maxLng+(maxLng-minLng)*.15;
+  let m='';
+  provs.filter(p=>p.lat!=null&&p.lng!=null&&inb(p.lat,p.lng)).forEach(p=>{
+    m+='<g class="pin" data-aksi="pin" data-id="'+esc(p.id)+'" tabindex="0" role="button" aria-label="'+esc(p.nama)+'"><circle cx="'+X(p.lng).toFixed(1)+'" cy="'+Y(p.lat).toFixed(1)+'" r="9" fill="'+WARNA_G[KAT[p.kat].g]+'" stroke="#fff" stroke-width="2.5"/></g>';
+  });
+  if(S.lok&&inb(S.lok.lat,S.lok.lng)) m+='<circle cx="'+X(S.lok.lng).toFixed(1)+'" cy="'+Y(S.lok.lat).toFixed(1)+'" r="8" fill="#FFC72C" stroke="#14201B" stroke-width="3"/>';
+  const a=C[0],z=C[C.length-1];
+  const lbl=(c,t,anc)=>'<text x="'+X(c[0]).toFixed(1)+'" y="'+(Y(c[1])-14).toFixed(1)+'" text-anchor="'+anc+'">'+esc(t)+'</text>';
+  return '<svg class="peta" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Gambar skematis rute '+esc(k.nama)+'"><polyline points="'+pts+'" fill="none" stroke="#2B3338" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><polyline points="'+pts+'" fill="none" stroke="#FFC72C" stroke-width="2" stroke-dasharray="7 7" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<circle cx="'+X(a[0]).toFixed(1)+'" cy="'+Y(a[1]).toFixed(1)+'" r="9" fill="#00693E" stroke="#fff" stroke-width="3"/><circle cx="'+X(z[0]).toFixed(1)+'" cy="'+Y(z[1]).toFixed(1)+'" r="9" fill="#C8102E" stroke="#fff" stroke-width="3"/>'
+    +lbl(a,k.asal||'Asal','start')+lbl(z,k.tujuan||'Tujuan','end')+m+'</svg>'
+    +'<div class="legenda"><span><i style="background:#0B57A4"></i>Kendaraan</span><span><i style="background:#00693E"></i>Makan &amp; istirahat</span><span><i style="background:#C8102E"></i>Darurat &amp; kesehatan</span><span><i style="background:#FFC72C;border:2px solid #14201B;width:6px;height:6px"></i>Posisi Anda</span></div>'
+    +'<p class="kecil muted" style="margin:6px 0 0">Gambar skematis, bukan peta. Ketuk penanda untuk melihat detail. Rute sebenarnya dibuka di Google Maps.</p><div id="pinDetail"></div>';
+}
+function urlPerjalanan(k,dariLokasi){
+  let u='https://www.google.com/maps/dir/?api=1&destination='+enc(k.tujuan||k.nama)+'&travelmode=driving';
+  if(!dariLokasi&&k.asal) u+='&origin='+enc(k.asal);
+  if(k.singgah.length) u+='&waypoints='+k.singgah.slice(0,9).map(enc).join('%7C');
+  return u;
+}
+function renderKoridor(){
+  const el=$('#koridorIsi');
+  if(!D.koridor.length){
+    el.innerHTML='<h2>Koridor jalan</h2><div class="card"><b>Informasi koridor belum tersedia.</b><p class="muted kecil" style="margin:6px 0 0">Koridor berisi kondisi jalan, titik rawan, dan penyedia di sepanjang jalur. Sementara, gunakan tab Terdekat atau buka Google Maps.</p></div>';return;
+  }
+  const k=D.koridor.find(x=>String(x.id)===String(S.koridorId));
+  if(!k){
+    el.innerHTML='<h2>Pilih koridor</h2>'+D.koridor.map(x=>'<button class="card" style="width:100%;text-align:left;cursor:pointer" data-aksi="koridor" data-id="'+esc(x.id)+'"><h3>'+esc(x.nama)+'</h3><span class="muted">'+esc([x.asal,x.tujuan].filter(Boolean).join(' → '))+(x.jenis?' • '+esc(x.jenis):'')+'</span></button>').join('');return;
+  }
+  const now=new Date();
+  const semuaIj=D.infojalan.filter(i=>i.ok&&cocokKoridor(i.kor,k));
+  const aktif=semuaIj.filter(i=>!i.hingga||i.hingga>=now), kadaluarsa=semuaIj.length-aktif.length;
+  const rank={bad:0,warn:1,'':2,ok:3}; aktif.sort((a,b)=>rank[sevInfo(a.status)]-rank[sevInfo(b.status)]);
+  const provs=dgn(D.penyedia.filter(p=>tampil(p)&&cocokKoridor(p.koridor,k)));
+  let h='<div class="baris" style="margin:8px 0"><button class="btn kecil" data-aksi="koridorKembali">← Semua koridor</button></div><h2 style="margin-top:8px">'+esc(k.nama)+'</h2>'
+    +'<p class="muted" style="margin:0 0 8px">'+esc([k.asal,k.tujuan].filter(Boolean).join(' → '))+(k.jenis?' • '+esc(k.jenis):'')+'</p>'
+    +(k.desk?'<p>'+esc(k.desk)+'</p>':'')
+    +'<div class="baris"><a class="btn utama" target="_blank" rel="noopener" href="'+urlPerjalanan(k,true)+'">Mulai dari lokasi saya</a>'+(k.asal?'<a class="btn" target="_blank" rel="noopener" href="'+urlPerjalanan(k,false)+'">Mulai dari '+esc(k.asal)+'</a>':'')+'</div>';
+  const peta=k.gambar&&/^https?:\/\//i.test(k.gambar)?'<img class="peta" loading="lazy" alt="Peta rute '+esc(k.nama)+'" src="'+esc(k.gambar)+'"/>':petaSkematis(k,provs);
+  if(peta) h+='<h2>Peta rute</h2>'+peta;
+  h+='<h2>Informasi jalan</h2>';
+  if(!aktif.length) h+='<div class="card"><b>Belum ada informasi jalan yang berlaku untuk koridor ini.</b><p class="muted kecil" style="margin:6px 0 0">Kondisi di lapangan dan petunjuk petugas selalu didahulukan.</p></div>';
+  h+=aktif.map(i=>{const s=sevInfo(i.status);return '<div class="card ij '+s+'"><div class="baris" style="justify-content:space-between"><h3>'+esc(i.ruas||'Ruas')+'</h3>'+(i.status?'<span class="tag '+s+'">'+esc(i.status)+'</span>':'')+'</div>'
+    +(i.jenis?'<span class="tag">'+esc(i.jenis)+'</span>':'')+(i.ket?'<p>'+esc(i.ket)+'</p>':'')
+    +'<div class="sumber">'+(i.sumber?'Sumber: '+esc(i.sumber):'Sumber belum dicantumkan')+(i.upd?' • diperbarui '+fmtTgl(i.upd):'')+(i.hingga?' • berlaku sampai '+fmtTgl(i.hingga):'')+'</div></div>'}).join('');
+  if(kadaluarsa) h+='<p class="kecil muted">'+kadaluarsa+' informasi sudah melewati masa berlaku dan disembunyikan.</p>';
+  h+='<h2>Penyedia di sepanjang koridor</h2>';
+  if(!provs.length) h+='<div class="card muted">Belum ada penyedia terverifikasi yang terdaftar pada koridor ini.</div>';
+  h+=provs.slice(0,S.jmlKor).map(kartu).join('');
+  if(provs.length>S.jmlKor) h+='<div style="text-align:center;margin:10px 0"><button class="btn" data-aksi="tambahKor">Tambah ('+(provs.length-S.jmlKor)+' lagi)</button></div>';
+  el.innerHTML=h;
+}
+
+/* ============ TAB DARURAT ============ */
+function renderDarurat(){
+  const el=$('#daruratIsi');
+  let h='<h2>Darurat</h2><div class="card" style="border-color:var(--red)"><b>Dalam keadaan yang mengancam nyawa, hubungi layanan darurat resmi lebih dulu.</b><p class="muted kecil" style="margin:6px 0 0">Daftar nomor di bawah berasal dari sumber resmi yang dicantumkan pengelola.</p></div>';
+  if(D.kontak.length){
+    const gr={};D.kontak.forEach(k=>{(gr[k.jenis||'Layanan']=gr[k.jenis||'Layanan']||[]).push(k)});
+    Object.keys(gr).forEach(j=>{h+='<h3 style="margin:14px 0 4px">'+esc(j)+'</h3>'+gr[j].map(k=>'<div class="card"><div class="baris" style="justify-content:space-between"><div><b>'+esc(k.nama)+'</b>'+(k.wilayah?'<div class="muted kecil">'+esc(k.wilayah)+'</div>':'')+'<div class="sumber">'+(k.sumber?'Sumber: '+esc(k.sumber):'')+(k.ver?' • diverifikasi '+fmtTgl(k.ver):'')+'</div></div><a class="btn utama" href="tel:'+esc(tel(k.telp))+'">Telepon '+esc(k.telp)+'</a></div></div>').join('')});
+  }else h+='<div class="card"><b>Nomor layanan darurat belum diisi.</b><p class="muted kecil" style="margin:6px 0 0">Nomor hanya ditampilkan setelah diverifikasi ke instansi resmi.</p></div>';
+  h+='<h2>Cari bantuan terdekat</h2><div class="ubin">'+['rs','polisi','apotek','derek','bengkel','tambalban'].map(k=>'<button class="u'+(KAT[k].g==='darurat'?' darurat':'')+'" data-aksi="keKat" data-k="'+k+'"><span class="ik">'+KAT[k].i+'</span><span class="nm">'+esc(KAT[k].n)+'</span></button>').join('')+'</div>';
+  h+='<h2>Bagikan lokasi</h2><div class="card"><p style="margin:0 0 10px" class="muted">Kirim posisi Anda lewat WhatsApp agar keluarga atau teman tahu di mana Anda berada.</p><button class="btn utama" data-aksi="bagiLokasi">Kirim lokasi saya lewat WhatsApp</button></div>';
+  el.innerHTML=h;
+}
+
+/* ============ TAB TERSIMPAN & INFO ============ */
+function renderSimpan(){
+  const L=dgn(D.penyedia.filter(p=>S.simpan.has(p.id)));
+  $('#simpanIsi').innerHTML=L.length?L.map(kartu).join(''):'<div class="card"><b>Belum ada tempat tersimpan.</b><p class="muted kecil" style="margin:6px 0 0">Ketuk ☆ Simpan pada kartu penyedia agar mudah ditemukan lagi, termasuk saat tanpa internet.</p></div>';
+}
+function renderInfo(){
+  const baris=(n,k,jml)=>'<li>'+n+': '+(SS[k]?esc(SS[k].asal):'belum dimuat')+(jml!=null?' • '+jml+' baris':'')+(SS[k]&&SS[k].t?' • '+new Date(SS[k].t).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'')+'</li>';
+  const uji=D.penyedia.filter(p=>p.uji).length;
+  $('#infoData').innerHTML='<ul class="rapi" style="margin:0">'+baris('Penyedia','penyedia',D.penyedia.filter(p=>!p.uji).length)+baris('Informasi jalan','infojalan',D.infojalan.length)+baris('Koridor','koridor',D.koridor.length)+baris('Kontak darurat','kontak',D.kontak.length)+(uji?'<li>Data uji di perangkat ini: '+uji+' baris</li>':'')+'</ul><p class="kecil muted" style="margin:10px 0 0">Setiap informasi menampilkan sumber dan tanggal pembaruan. Data yang belum terverifikasi tidak ditampilkan. Informasi bersifat panduan; kondisi di lapangan dan petunjuk petugas selalu didahulukan.</p>';
+}
+function renderSemua(){renderLokasi();renderPeringatan();renderUbin();renderHasil();renderKoridor();renderDarurat();renderSimpan();renderInfo()}
+
+/* ============ NAVIGASI & AKSI ============ */
+function keTab(t){
+  S.tab=t;$$('.view').forEach(v=>v.classList.toggle('aktif',v.id==='v-'+t));
+  $$('.tab button').forEach(b=>{const a=b.dataset.tab===t;b.classList.toggle('aktif',a);if(a)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  window.scrollTo(0,0);
+}
+function laporan(p){
+  const teks='Laporan data RoadMate\nPenyedia: '+p.nama+' (id: '+p.id+')\nMasalah yang ditemukan: ';
+  const w=waNo(CONFIG.kontakAdmin.wa), e=CONFIG.kontakAdmin.email;
+  if(w) window.open('https://wa.me/'+w+'?text='+enc(teks),'_blank','noopener');
+  else if(e) location.href='mailto:'+e+'?subject='+enc('Laporan data RoadMate: '+p.nama)+'&body='+enc(teks);
+  else if(navigator.clipboard) navigator.clipboard.writeText(teks).then(()=>toast('Teks laporan disalin. Kirim ke pengelola data.'),()=>toast('Kontak pengelola belum diatur.'));
+  else toast('Kontak pengelola belum diatur.');
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-aksi],[data-tab]'); if(!t) return;
+  if(t.dataset.tab){keTab(t.dataset.tab);return}
+  const a=t.dataset.aksi, id=t.dataset.id;
+  if(a==='lokasi') mintaLokasi();
+  else if(a==='kat'){S.kat=t.dataset.k;S.cari='';$('#cari').value='';S.jml=CONFIG.jumlahAwal;renderUbin();renderHasil()}
+  else if(a==='keKat'){S.kat=t.dataset.k;S.cari='';$('#cari').value='';S.jml=CONFIG.jumlahAwal;keTab('terdekat');renderUbin();renderHasil()}
+  else if(a==='tambah'){S.jml+=CONFIG.jumlahAwal;renderHasil()}
+  else if(a==='tambahKor'){S.jmlKor+=5;renderKoridor()}
+  else if(a==='simpan'){S.simpan.has(id)?S.simpan.delete(id):S.simpan.add(id);try{localStorage.setItem('rm_simpan',JSON.stringify([...S.simpan]))}catch(_){}renderHasil();renderKoridor();renderSimpan()}
+  else if(a==='lapor'){const p=D.penyedia.find(x=>x.id===id);if(p)laporan(p)}
+  else if(a==='koridor'){S.koridorId=id;S.jmlKor=5;renderKoridor();window.scrollTo(0,0)}
+  else if(a==='koridorKembali'){S.koridorId=null;renderKoridor()}
+  else if(a==='pin'){const p=D.penyedia.find(x=>x.id===id);const box=$('#pinDetail');if(p&&box){box.innerHTML=kartu(dgn([p])[0])}}
+  else if(a==='bagiLokasi'){
+    if(!S.lok){toast('Aktifkan lokasi lebih dulu di tab Terdekat.');return}
+    window.open('https://wa.me/?text='+enc('Posisi saya sekarang: https://www.google.com/maps?q='+S.lok.lat+','+S.lok.lng),'_blank','noopener');
+  }
+});
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.pin')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
+$('#cari').addEventListener('input',e=>{S.cari=e.target.value;S.jml=CONFIG.jumlahAwal;renderUbin();renderHasil()});
+
+/* alat uji data */
+$('#btnUjiMuat').addEventListener('click',()=>{
+  const t=$('#ujiCsv').value.trim(), m=$('#ujiPesan');
+  if(!t){m.textContent='Tempelkan CSV lebih dulu.';return}
+  const rows=parseCSV(t), baik=olahPenyedia(rows,true);
+  if(!baik.length){m.textContent='Tidak ada baris yang valid. Pastikan ada kolom nama dan kategori (spbu, bengkel, tambalban, makan, dan seterusnya).';return}
+  try{localStorage.setItem('rm_uji_penyedia',t)}catch(e){m.textContent='Penyimpanan perangkat penuh atau diblokir.';return}
+  m.textContent=baik.length+' baris dimuat sebagai data uji.';muatSemua().then(renderSemua);
+});
+$('#btnUjiHapus').addEventListener('click',()=>{try{localStorage.removeItem('rm_uji_penyedia')}catch(e){}$('#ujiCsv').value='';$('#ujiPesan').textContent='Data uji dihapus.';muatSemua().then(renderSemua)});
+
+/* pasang aplikasi & status jaringan */
+let tundaPasang=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();tundaPasang=e;$('#btnPasang').hidden=false;$('#btnPasang2').hidden=false});
+async function pasang(){if(!tundaPasang)return;tundaPasang.prompt();await tundaPasang.userChoice;tundaPasang=null;$('#btnPasang').hidden=true;$('#btnPasang2').hidden=true}
+$('#btnPasang').addEventListener('click',pasang);$('#btnPasang2').addEventListener('click',pasang);
+window.addEventListener('appinstalled',()=>{$('#btnPasang').hidden=true;$('#btnPasang2').hidden=true});
+const daring=()=>$('#statusDaring').classList.toggle('show',!navigator.onLine);
+window.addEventListener('online',daring);window.addEventListener('offline',daring);
+
+/* mulai */
+(async function(){
+  renderSemua();daring();
+  await muatSemua();renderSemua();
+  if(navigator.permissions&&navigator.permissions.query){navigator.permissions.query({name:'geolocation'}).then(p=>{if(p.state==='granted')mintaLokasi()}).catch(()=>{})}
+  if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+})();
+</script>
+</body>
+</html>
