@@ -130,7 +130,6 @@ ul.rapi li{margin:4px 0}
 <main>
   <!-- TERDEKAT -->
   <section id="v-terdekat" class="view aktif" aria-label="Terdekat dari Anda">
-    <div id="lokbar" class="card lok"></div>
     
     <div id="peringatan"></div>
     <div id="ubin" class="ubin" role="group" aria-label="Pilih kategori"></div>
@@ -322,14 +321,14 @@ function mintaLokasi(){
   if(!navigator.geolocation){toast('Peramban ini tidak dapat membaca lokasi.');return}
   S.mencari=true;renderLokasi();
   navigator.geolocation.getCurrentPosition(p=>{
-    S.lok={lat:p.coords.latitude,lng:p.coords.longitude,akurasi:p.coords.accuracy,t:Date.now()};S.mencari=false;S.jml=CONFIG.jumlahAwal;renderSemua();
+    S.lok={lat:p.coords.latitude,lng:p.coords.longitude,akurasi:p.coords.accuracy,t:Date.now()};S.mencari=false;S.jml=CONFIG.jumlahAwal;renderSemua();if(S.tunggu){S.tunggu=false;toast('Lokasi terbaca. Tekan tombol kirim lokasi sekali lagi.')}
   },e=>{
     S.mencari=false;renderLokasi();
     toast(e.code===1?'Izin lokasi ditolak. Aktifkan izin lokasi untuk situs ini di pengaturan peramban.':'Lokasi belum terbaca. Pastikan GPS aktif lalu coba lagi.');
   },{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
 }
 function renderLokasi(){
-  const el=$('#lokbar');
+  const el=$('#lokbar'); if(!el) return;
   if(S.mencari){el.innerHTML='<div><b>Mencari lokasi…</b><span class="muted kecil">Tunggu beberapa detik</span></div>';return}
   if(S.lok){const ak=S.lok.akurasi>2000?'Akurasi rendah (sekitar '+Math.round(S.lok.akurasi/1000)+' km). Komputer memperkirakan lokasi dari jaringan; di ponsel dengan GPS hasilnya lebih tepat.':'Akurasi sekitar '+Math.round(S.lok.akurasi)+' m';
   el.innerHTML='<div><b>Lokasi terbaca</b><span class="muted kecil">'+ak+' • diperbarui '+new Date(S.lok.t).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})+'</span></div><button class="btn kecil" data-aksi="lokasi">Perbarui</button>';return}
@@ -544,7 +543,7 @@ function renderDarurat(){
     Object.keys(gr).forEach(j=>{h+='<h3 style="margin:14px 0 4px">'+esc(j)+'</h3>'+gr[j].map(k=>'<div class="card"><div class="baris" style="justify-content:space-between"><div><b>'+esc(k.nama)+'</b>'+(k.wilayah?'<div class="muted kecil">'+esc(k.wilayah)+'</div>':'')+'<div class="sumber">'+(k.sumber?'Sumber: '+esc(k.sumber):'')+(k.ver?' • diverifikasi '+fmtTgl(k.ver):'')+'</div></div><a class="btn utama" href="tel:'+esc(tel(k.telp))+'">Telepon '+esc(k.telp)+'</a></div></div>').join('')});
   }else h+='<div class="card"><b>Nomor layanan darurat belum diisi.</b><p class="muted kecil" style="margin:6px 0 0">Nomor hanya ditampilkan setelah diverifikasi ke instansi resmi.</p></div>';
   h+='<h2>Cari bantuan terdekat</h2><div class="ubin">'+['rs','polisi','apotek','derek','bengkel','tambalban'].map(k=>'<button class="u'+(KAT[k].g==='darurat'?' darurat':'')+'" data-aksi="keKat" data-k="'+k+'"><span class="ik">'+KAT[k].i+'</span><span class="nm">'+esc(KAT[k].n)+'</span></button>').join('')+'</div>';
-  h+='<h2>Bagikan lokasi</h2><div class="card"><p style="margin:0 0 10px" class="muted">Kirim posisi Anda lewat WhatsApp agar keluarga atau teman tahu di mana Anda berada.</p><button class="btn utama" data-aksi="bagiLokasi">Kirim lokasi saya lewat WhatsApp</button></div>';
+  h+='<h2>Bagikan lokasi</h2><div class="card"><p style="margin:0 0 10px" class="muted">Kirim posisi Anda lewat WhatsApp agar keluarga atau teman tahu di mana Anda berada. Lokasi dibaca hanya saat Anda menekan tombol ini.</p><button class="btn utama" data-aksi="bagiLokasi">Kirim lokasi saya lewat WhatsApp</button></div>';
   el.innerHTML=h;
 }
 
@@ -592,7 +591,7 @@ document.addEventListener('click',e=>{
   else if(a==='koridorKembali'){S.koridorId=null;renderKoridor()}
   else if(a==='pin'){const p=D.penyedia.find(x=>x.id===id);const box=$('#pinDetail');if(p&&box){box.innerHTML=kartu(dgn([p])[0])}}
   else if(a==='bagiLokasi'){
-    if(!S.lok){toast('Aktifkan lokasi lebih dulu di tab Terdekat.');return}
+    if(!S.lok){toast('Membaca lokasi… setelah muncul pesan lokasi terbaca, tekan tombol ini sekali lagi.');S.tunggu=true;mintaLokasi();return}
     window.open('https://wa.me/?text='+enc('Posisi saya sekarang: https://www.google.com/maps?q='+S.lok.lat+','+S.lok.lng),'_blank','noopener');
   }
 });
@@ -623,7 +622,6 @@ window.addEventListener('online',daring);window.addEventListener('offline',darin
 (async function(){
   renderSemua();daring();
   await muatSemua();renderSemua();
-  if(navigator.permissions&&navigator.permissions.query){navigator.permissions.query({name:'geolocation'}).then(p=>{if(p.state==='granted')mintaLokasi()}).catch(()=>{})}
   if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 })();
 </script>
