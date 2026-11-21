@@ -131,6 +131,8 @@ ul.rapi li{margin:4px 0}
   <!-- TERDEKAT -->
   <section id="v-terdekat" class="view aktif" aria-label="Terdekat dari Anda">
     
+    <form class="cari" id="formCari" role="search"><input id="cari" type="search" placeholder="Cari apa saja, atau: arahkan saya ke …" autocomplete="off" enterkeyhint="search" aria-label="Cari tempat atau minta arah"/><button class="btn utama" type="submit">Cari</button></form>
+    <p class="kecil muted" style="margin:6px 2px 0">Contoh: <b>sate</b>, <b>bengkel las</b>, <b>arahkan saya ke Tangkuban Parahu</b>. Hasil dibuka di Google Maps.</p>
     <div id="peringatan"></div>
     <div id="ubin" class="ubin" role="group" aria-label="Pilih kategori"></div>
     <div id="hasil"></div>
@@ -597,6 +599,28 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.pin')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
 
+
+/* pencarian & perintah arah */
+function bacaPerintah(t){
+  t=t.trim().replace(/\s+/g,' ');
+  let m;
+  if((m=t.match(/^(?:tolong\s+)?(?:arahkan|antar(?:kan)?|bawa|tunjukkan(?:\s+jalan)?)\s+(?:saya\s+|aku\s+)?(?:ke|menuju)\s+(.+)$/i))) return {arah:m[1]};
+  if((m=t.match(/^(?:rute|navigasi|jalan|menuju)\s+(?:ke\s+)?(.+)$/i))) return {arah:m[1]};
+  if((m=t.match(/^ke\s+(.+)$/i))) return {arah:m[1]};
+  return {cari:t};
+}
+function urlDariPerintah(t){
+  const r=bacaPerintah(t);
+  if(r.arah) return 'https://www.google.com/maps/dir/?api=1&destination='+enc(r.arah)+'&travelmode=driving';
+  const sudahLokasi=/dekat|\bdi\s|\bdekat\b|sekitar/i.test(r.cari);
+  return 'https://www.google.com/maps/search/?api=1&query='+enc(sudahLokasi?r.cari:r.cari+' terdekat');
+}
+$('#formCari').addEventListener('submit',e=>{
+  e.preventDefault();
+  const q=$('#cari').value.trim();
+  if(!q){toast('Ketik yang dicari, misalnya sate, atau arahkan saya ke …');return}
+  window.open(urlDariPerintah(q),'_blank','noopener');
+});
 
 /* alat uji data */
 $('#btnUjiMuat').addEventListener('click',()=>{
