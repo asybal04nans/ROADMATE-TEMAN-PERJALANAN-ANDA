@@ -209,6 +209,7 @@ const CONFIG = {
   batasUsangHari: 180,
   jarakJauhKm: 50,
   jumlahAwal: 3,
+  ikonLangsungMaps: true, // true: klik ikon langsung membuka Google Maps; false: tampilkan daftar di aplikasi
   osm: true // bila data RoadMate untuk suatu kategori kosong, cari tempat terdekat dari OpenStreetMap
 };
 
@@ -577,6 +578,8 @@ document.addEventListener('click',e=>{
   if(t.dataset.tab){keTab(t.dataset.tab);return}
   const a=t.dataset.aksi, id=t.dataset.id;
   if(a==='lokasi') mintaLokasi();
+  else if(a==='kat'&&CONFIG.ikonLangsungMaps){window.open(gmapsCari(KAT[t.dataset.k].q),'_blank','noopener')}
+  else if(a==='keKat'&&CONFIG.ikonLangsungMaps){window.open(gmapsCari(KAT[t.dataset.k].q),'_blank','noopener')}
   else if(a==='kat'){S.kat=t.dataset.k;S.cari='';$('#cari').value='';S.jml=CONFIG.jumlahAwal;renderUbin();renderHasil()}
   else if(a==='keKat'){S.kat=t.dataset.k;S.cari='';$('#cari').value='';S.jml=CONFIG.jumlahAwal;keTab('terdekat');renderUbin();renderHasil()}
   else if(a==='osmUlang'){delete S.osm[osmKey(S.kat)];renderHasil()}
