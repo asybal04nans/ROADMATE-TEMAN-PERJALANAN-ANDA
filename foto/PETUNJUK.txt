@@ -1,0 +1,8 @@
+Letakkan foto di folder ini dengan nama persis seperti di bawah (huruf kecil, format .jpg).
+Aplikasi memakainya otomatis; kategori tanpa foto tetap memakai ikon.
+Ukuran saran: 800 x 600 piksel (4:3), JPG, di bawah 80 KB per berkas.
+Lihat PANDUAN-FOTO.md di folder utama untuk perintah pembuatan gambar AI dan aturan foto asli.
+
+spbu.jpg  spklu.jpg  bengkel.jpg  tambalban.jpg  derek.jpg
+parkir.jpg  makan.jpg  penginapan.jpg  musala.jpg  toilet.jpg
+minimarket.jpg  atm.jpg  rs.jpg  apotek.jpg  polisi.jpg

@@ -107,6 +107,16 @@ h3{font-size:17px;margin:0 0 4px;font-weight:800}
 textarea{width:100%;min-height:110px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px;font:13px/1.4 ui-monospace,Consolas,monospace}
 ul.rapi{padding-left:20px;margin:8px 0}
 ul.rapi li{margin:4px 0}
+/* Ubin dengan foto: dipakai otomatis bila berkas foto/<kategori>.jpg ada */
+.u{position:relative}
+.u img{display:none}
+.u.berfoto{overflow:hidden;padding:0 4px 9px;justify-content:flex-end;background:#0B3A6E}
+.u.berfoto img{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:14px}
+.u.berfoto::before{content:"";position:absolute;inset:0;z-index:1;border-radius:14px;background:linear-gradient(to top,rgba(0,15,35,.88),rgba(0,0,0,0) 62%);box-shadow:inset 0 0 0 3px var(--blue),inset 0 0 0 5px #fff}
+.u.darurat.berfoto{background:#6E0A1A}
+.u.darurat.berfoto::before{background:linear-gradient(to top,rgba(50,0,10,.9),rgba(0,0,0,0) 62%);box-shadow:inset 0 0 0 3px var(--red),inset 0 0 0 5px #fff}
+.u.berfoto .ik{display:none}
+.u.berfoto .nm,.u.berfoto .jr{position:relative;z-index:2;text-shadow:0 1px 3px rgba(0,0,0,.7)}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 @media (min-width:560px){.ubin{grid-template-columns:repeat(5,1fr)}}
 </style>
@@ -422,7 +432,7 @@ function renderUbin(){
   const ada=D.penyedia.filter(tampil), L=dgn(ada);
   $('#ubin').innerHTML=KATEGORI.map(c=>{
     const n=L.find(p=>p.kat===c.k&&p.d!=null);
-    return '<button class="u'+(c.g==='darurat'?' darurat':'')+(S.kat===c.k&&!S.cari?' terpilih':'')+'" data-aksi="kat" data-k="'+c.k+'" aria-pressed="'+(S.kat===c.k)+'"><span class="ik">'+c.i+'</span><span class="nm">'+esc(c.n)+'</span><span class="jr">'+(n?fmtJarak(n.d):'')+'</span></button>';
+    return '<button class="u'+(c.g==='darurat'?' darurat':'')+(S.kat===c.k&&!S.cari?' terpilih':'')+'" data-aksi="kat" data-k="'+c.k+'" aria-pressed="'+(S.kat===c.k)+'"><img src="foto/'+c.k+'.jpg" alt="" onload="this.parentNode.classList.add(\'berfoto\')" onerror="this.remove()"/><span class="ik">'+c.i+'</span><span class="nm">'+esc(c.n)+'</span><span class="jr">'+(n?fmtJarak(n.d):'')+'</span></button>';
   }).join('');
 }
 function renderHasil(){
