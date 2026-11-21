@@ -5,75 +5,86 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>RoadMate — Teman Perjalanan Anda</title>
 <meta name="description" content="RoadMate menunjukkan penyedia terdekat (SPBU, bengkel, tambal ban, tempat makan, penginapan, rumah sakit) dan informasi jalan untuk pengendara."/>
-<meta name="theme-color" content="#00693E"/>
+<meta name="theme-color" content="#000000"/>
 <link rel="manifest" href="manifest.webmanifest"/>
 <link rel="icon" href="icons/icon-192.png" type="image/png"/>
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
 <style>
 :root{
-  --green:#00693E; --blue:#0B57A4; --yellow:#FFC72C; --red:#C8102E; --orange:#C96A00;
-  --ink:#14201B; --muted:#53645B; --paper:#EDF0ED; --card:#FFFFFF; --line:#D3DAD5;
-  --accent:#00693E; --on-accent:#FFFFFF; --ok:#0B7A3E; --warn:#B45F00; --bad:#C8102E;
+  --gold:#E2B44A; --gold2:#F6D77E; --gold3:#A87A22; --red:#D7263D; --yellow:#FFC72C;
+  --ink:#F4F0E6; --muted:#B9B09A; --paper:#0B0B0C; --card:#151516; --line:#3B3017;
+  --accent:#E2B44A; --on-accent:#1A1300; --ok:#62D79A; --warn:#FFB45A; --bad:#FF8091;
   --font:"Bahnschrift","DIN Alternate","Roboto","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
 }
-@media (prefers-color-scheme:dark){
-  :root{--ink:#EAF0EC;--muted:#A3B5AB;--paper:#14181A;--card:#1E2427;--line:#2F3A3E;--accent:#4FD08F;--on-accent:#06281A;--ok:#4FD08F;--warn:#FFB45A;--bad:#FF7D8C}
-}
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.45 var(--font);padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+html{-webkit-text-size-adjust:100%;color-scheme:dark}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.45 var(--font);padding-bottom:calc(78px + env(safe-area-inset-bottom))}
 a{color:inherit}
 button{font:inherit;color:inherit}
-:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+:focus-visible{outline:3px solid var(--gold2);outline-offset:2px}
 
-/* Papan nama bergaya rambu jalan tol */
-.papan{background:var(--green);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 16px;position:relative;
-  box-shadow:inset 0 -4px 0 var(--green), inset 0 -6px 0 rgba(255,255,255,.9)}
-.papan-isi{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:12px}
-.papan h1{margin:0;font-size:26px;line-height:1.05;font-weight:800;letter-spacing:-.01em}
-.papan p{margin:3px 0 0;font-size:15px;font-weight:600;color:#FFE08A}
-.papan .logo{flex:none;width:46px;height:46px}
+/* Kepala: hitam dengan garis emas dan jalan pegunungan */
+.papan{position:relative;background:#000;overflow:hidden;padding:calc(12px + env(safe-area-inset-top)) 14px 14px;border-bottom:2px solid transparent;border-image:linear-gradient(90deg,rgba(226,180,74,0),var(--gold),rgba(226,180,74,0)) 1}
+.papan::after{content:"";position:absolute;top:0;right:0;bottom:0;width:min(58%,560px);background:url(aset/header-latar.jpg) right center/cover no-repeat;-webkit-mask-image:linear-gradient(90deg,transparent,#000 50%);mask-image:linear-gradient(90deg,transparent,#000 50%)}
+.papan-isi{position:relative;z-index:1;max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.papan .logo{flex:none;width:58px;height:52px;object-fit:contain;mix-blend-mode:screen;-webkit-mask-image:radial-gradient(closest-side,#000 62%,transparent 100%);mask-image:radial-gradient(closest-side,#000 62%,transparent 100%)}
+.papan h1{margin:0;font-size:27px;line-height:1;font-weight:900;font-style:italic;letter-spacing:.01em;text-transform:uppercase;background:linear-gradient(180deg,var(--gold2),var(--gold3));-webkit-background-clip:text;background-clip:text;color:transparent}
+.papan p{margin:4px 0 0;font-size:14px;font-weight:700;font-style:italic;color:var(--gold2)}
 .papan .kanan{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
-.status-daring{font-size:12px;font-weight:700;background:rgba(0,0,0,.28);padding:3px 8px;border-radius:99px;display:none}
+.status-daring{font-size:12px;font-weight:700;background:rgba(0,0,0,.6);border:1px solid var(--gold3);padding:3px 8px;border-radius:99px;display:none}
 .status-daring.show{display:inline-block}
 
 main{max-width:760px;margin:0 auto;padding:14px 14px 8px}
 .view{display:none}.view.aktif{display:block}
-h2{font-size:21px;line-height:1.2;margin:18px 0 8px;font-weight:800}
+h2{font-size:21px;line-height:1.2;margin:18px 0 8px;font-weight:800;color:var(--gold2)}
 h3{font-size:17px;margin:0 0 4px;font-weight:800}
 .muted{color:var(--muted)}
 .kecil{font-size:13px}
 
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:10px;border:2px solid var(--accent);background:transparent;color:var(--accent);font-weight:700;cursor:pointer;text-decoration:none}
-.btn.utama{background:var(--accent);color:var(--on-accent)}
-.btn.kuning{background:var(--yellow);border-color:var(--yellow);color:#1b1500}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:12px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-weight:700;cursor:pointer;text-decoration:none}
+.btn.utama,.btn.kuning{background:linear-gradient(180deg,var(--gold2),var(--gold));border-color:var(--gold);color:var(--on-accent)}
 .btn.kecil{min-height:38px;padding:0 12px;font-size:14px}
 .btn[disabled]{opacity:.5;cursor:default}
 .baris{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 
 /* Bilah lokasi */
-.lok{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.lok b{display:block}
-.cari{display:flex;gap:8px}
-.cari input{flex:1;min-width:0;min-height:46px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0 14px;font:inherit}
+.lok{display:flex;gap:12px;align-items:center;border:1px solid var(--gold3);background:linear-gradient(#171717,#0D0D0D);border-radius:16px;padding:10px 12px}
+.lok svg{flex:none;width:26px;height:26px;stroke:var(--gold);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.lok-t{flex:1;min-width:0}
+.lok-t small{display:block;color:var(--muted);font-size:12px}
+.lok-t b{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.akur{flex:none;font-size:12px;font-weight:700;color:var(--ok);display:flex;align-items:center;gap:5px}
+.akur::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.akur.rendah{color:var(--warn)}
+.lok-b{flex:none;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--gold);background:#17130A;display:grid;place-items:center;cursor:pointer}
+.lok-b svg{width:24px;height:24px}
 
-/* Ubin kategori: papan petunjuk fasilitas */
-.ubin{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
-.u{appearance:none;border:0;cursor:pointer;text-align:center;background:var(--blue);color:#fff;border-radius:14px;padding:12px 4px 10px;
-  box-shadow:inset 0 0 0 3px var(--blue), inset 0 0 0 5px #fff;min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
-.u .ik{font-size:28px;line-height:1}
+/* Kolom cari */
+.cari{display:flex;gap:8px;margin-top:10px}
+.cari input{flex:1;min-width:0;min-height:48px;border-radius:16px;border:1px solid var(--gold3);background:linear-gradient(#171717,#0D0D0D);color:var(--ink);padding:0 14px;font:inherit}
+.cari input::placeholder{color:var(--muted)}
+.cari .btn{border-radius:16px;min-height:48px}
+
+/* Ubin kategori: foto bila ada, ikon bila belum */
+.ubin{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:12px 0}
+.u{appearance:none;border:0;cursor:pointer;position:relative;overflow:hidden;aspect-ratio:1.38/1;border-radius:14px;background:#17130A;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 4px;box-shadow:0 0 0 1.5px var(--gold3),0 3px 10px rgba(0,0,0,.55)}
+.u img{display:none}
+.u .ik{font-size:26px;line-height:1}
 .u .nm{font-size:13px;font-weight:800;line-height:1.15}
-.u .jr{font-size:12px;font-weight:600;color:#BFE0FF;min-height:15px}
-.u.terpilih{outline:4px solid var(--yellow);outline-offset:2px}
-.u.darurat{background:var(--red);box-shadow:inset 0 0 0 3px var(--red), inset 0 0 0 5px #fff}
-.u.darurat .jr{color:#FFD3D8}
+.u .jr{display:none}
+.u.berfoto{justify-content:flex-end;padding:0 4px 7px}
+.u.berfoto img{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.u.berfoto::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(0,0,0,.9),rgba(0,0,0,0) 58%)}
+.u.berfoto .ik{display:none}
+.u.berfoto .nm{position:relative;z-index:2;font-size:14px;text-shadow:0 1px 3px #000}
+.u.terpilih{box-shadow:0 0 0 2.5px var(--gold2),0 3px 10px rgba(0,0,0,.55)}
 
 /* Kartu penyedia */
-.pv{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0}
+.pv{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
 .pv-atas{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 .pv h3{margin:0}
-.jarak{flex:none;font-weight:800;font-size:18px;color:var(--accent);white-space:nowrap}
+.jarak{flex:none;font-weight:800;font-size:18px;color:var(--gold);white-space:nowrap}
 .tag{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:2px 9px;border:1px solid var(--line);margin:4px 6px 0 0;color:var(--muted)}
 .tag.ok{color:var(--ok);border-color:currentColor}.tag.warn{color:var(--warn);border-color:currentColor}.tag.bad{color:var(--bad);border-color:currentColor}
 .pv p{margin:6px 0 0}
@@ -88,35 +99,27 @@ h3{font-size:17px;margin:0 0 4px;font-weight:800}
 .dua{display:grid;gap:10px}
 
 /* Peta skematis */
-.peta{width:100%;height:auto;display:block;background:#DDE5DF;border-radius:12px;border:1px solid var(--line)}
-@media (prefers-color-scheme:dark){.peta{background:#1A2326}}
+.peta{width:100%;height:auto;display:block;background:#161617;border-radius:14px;border:1px solid var(--line)}
 .peta text{font:700 12px var(--font);fill:var(--ink)}
 .peta .pin{cursor:pointer}
 .legenda{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;margin:8px 0 0;color:var(--muted)}
 .legenda i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 
-/* Bilah tab bawah */
-.tab{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom);z-index:5}
+/* Bilah menu bawah */
+.tab{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(#151515,#050505);border-top:1.5px solid var(--gold3);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom);z-index:5}
 .tab-isi{display:flex;width:100%;max-width:760px}
-.tab button{flex:1;appearance:none;border:0;background:none;cursor:pointer;padding:8px 2px 7px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:60px;color:var(--muted);font-size:12px;font-weight:700;border-top:4px solid transparent}
-.tab button .i{font-size:21px;line-height:1}
-.tab button.aktif{color:var(--accent);border-top-color:var(--yellow)}
+.tab button{flex:1;appearance:none;border:0;background:none;cursor:pointer;padding:8px 2px 7px;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:62px;color:#D9D2C0;font-size:12px;font-weight:700;border-top:3px solid transparent}
+.tab button .i{display:grid;place-items:center;width:26px;height:26px}
+.tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab button.aktif{color:var(--gold);border-top-color:var(--gold)}
+.tab button[data-tab=darurat] .i{width:34px;height:34px;border-radius:50%;background:var(--red);color:#fff;margin-top:-6px;box-shadow:0 0 0 2px rgba(255,255,255,.14)}
+.tab button[data-tab=darurat]{color:#fff}
 
-.toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#16221C;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;max-width:90%;z-index:9;display:none}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#2A2210;color:var(--ink);border:1px solid var(--gold3);padding:10px 16px;border-radius:12px;font-size:14px;max-width:90%;z-index:9;display:none}
 .toast.show{display:block}
-textarea{width:100%;min-height:110px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px;font:13px/1.4 ui-monospace,Consolas,monospace}
+textarea{width:100%;min-height:110px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px;font:13px/1.4 ui-monospace,Consolas,monospace}
 ul.rapi{padding-left:20px;margin:8px 0}
 ul.rapi li{margin:4px 0}
-/* Ubin dengan foto: dipakai otomatis bila berkas foto/<kategori>.jpg ada */
-.u{position:relative}
-.u img{display:none}
-.u.berfoto{overflow:hidden;padding:0 4px 9px;justify-content:flex-end;background:#0B3A6E}
-.u.berfoto img{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:14px}
-.u.berfoto::before{content:"";position:absolute;inset:0;z-index:1;border-radius:14px;background:linear-gradient(to top,rgba(0,15,35,.88),rgba(0,0,0,0) 62%);box-shadow:inset 0 0 0 3px var(--blue),inset 0 0 0 5px #fff}
-.u.darurat.berfoto{background:#6E0A1A}
-.u.darurat.berfoto::before{background:linear-gradient(to top,rgba(50,0,10,.9),rgba(0,0,0,0) 62%);box-shadow:inset 0 0 0 3px var(--red),inset 0 0 0 5px #fff}
-.u.berfoto .ik{display:none}
-.u.berfoto .nm,.u.berfoto .jr{position:relative;z-index:2;text-shadow:0 1px 3px rgba(0,0,0,.7)}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 @media (min-width:560px){.ubin{grid-template-columns:repeat(5,1fr)}}
 </style>
@@ -125,7 +128,7 @@ ul.rapi li{margin:4px 0}
 
 <header class="papan">
   <div class="papan-isi">
-    <svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="9" fill="none" stroke="#fff" stroke-width="3"/><text x="24" y="31" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="25" fill="#fff">R</text><g fill="#FFC72C"><rect x="9" y="37" width="7" height="2.4" rx="1"/><rect x="20.5" y="37" width="7" height="2.4" rx="1"/><rect x="32" y="37" width="7" height="2.4" rx="1"/></g></svg>
+    <img class="logo" src="aset/logo.jpg" alt=""/>
     <div>
       <h1>RoadMate</h1>
       <p>Teman Perjalanan Anda</p>
@@ -141,7 +144,8 @@ ul.rapi li{margin:4px 0}
   <!-- TERDEKAT -->
   <section id="v-terdekat" class="view aktif" aria-label="Terdekat dari Anda">
     
-    <form class="cari" id="formCari" role="search"><input id="cari" type="search" placeholder="Cari apa saja, atau: arahkan saya ke …" autocomplete="off" enterkeyhint="search" aria-label="Cari tempat atau minta arah"/><button class="btn utama" type="submit">Cari</button></form>
+    <div id="lokbar" class="lok"></div>
+    <form class="cari" id="formCari" role="search"><input id="cari" type="search" placeholder="Cari SPBU, sate, atau minta arah" autocomplete="off" enterkeyhint="search" aria-label="Cari tempat atau minta arah"/><button class="btn utama" type="submit">Cari</button></form>
     <p class="kecil muted" style="margin:6px 2px 0">Contoh: <b>sate</b>, <b>bengkel las</b>, <b>arahkan saya ke Tangkuban Parahu</b>. Hasil dibuka di Google Maps.</p>
     <div id="peringatan"></div>
     <div id="ubin" class="ubin" role="group" aria-label="Pilih kategori"></div>
@@ -201,11 +205,11 @@ ul.rapi li{margin:4px 0}
 </main>
 
 <nav class="tab" aria-label="Menu utama"><div class="tab-isi">
-  <button data-tab="terdekat" class="aktif"><span class="i">📍</span>Terdekat</button>
-  <button data-tab="koridor"><span class="i">🛣️</span>Koridor</button>
-  <button data-tab="darurat"><span class="i">🚑</span>Darurat</button>
-  <button data-tab="simpan"><span class="i">⭐</span>Tersimpan</button>
-  <button data-tab="info"><span class="i">ℹ️</span>Info</button>
+  <button data-tab="terdekat" class="aktif"><span class="i"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/><path d="M10 20v-6h4v6"/></svg></span>Beranda</button>
+  <button data-tab="koridor"><span class="i"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="5" r="2"/><circle cx="18" cy="19" r="2"/><path d="M8 5h7a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h7"/></svg></span>Koridor</button>
+  <button data-tab="darurat"><span class="i"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4.5M12 17.2v.1"/></svg></span>Darurat</button>
+  <button data-tab="simpan"><span class="i"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21V3z"/></svg></span>Tersimpan</button>
+  <button data-tab="info"><span class="i"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.1"/></svg></span>Info</button>
 </div></nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -341,10 +345,13 @@ function mintaLokasi(){
 }
 function renderLokasi(){
   const el=$('#lokbar'); if(!el) return;
-  if(S.mencari){el.innerHTML='<div><b>Mencari lokasi…</b><span class="muted kecil">Tunggu beberapa detik</span></div>';return}
-  if(S.lok){const ak=S.lok.akurasi>2000?'Akurasi rendah (sekitar '+Math.round(S.lok.akurasi/1000)+' km). Komputer memperkirakan lokasi dari jaringan; di ponsel dengan GPS hasilnya lebih tepat.':'Akurasi sekitar '+Math.round(S.lok.akurasi)+' m';
-  el.innerHTML='<div><b>Lokasi terbaca</b><span class="muted kecil">'+ak+' • diperbarui '+new Date(S.lok.t).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})+'</span></div><button class="btn kecil" data-aksi="lokasi">Perbarui</button>';return}
-  el.innerHTML='<div><b>Aktifkan lokasi untuk melihat yang terdekat</b><span class="muted kecil">Jarak dihitung di ponsel Anda</span></div><button class="btn utama" data-aksi="lokasi">Gunakan lokasi saya</button>';
+  const PIN='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>', TARGET='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="7.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>';
+  const tombol='<button class="lok-b" data-aksi="lokasi" aria-label="Baca atau perbarui lokasi">'+TARGET+'</button>';
+  if(S.mencari){el.innerHTML=PIN+'<div class="lok-t"><small>Lokasi Anda</small><b>Mencari lokasi…</b></div>';return}
+  if(S.lok){
+    const a=S.lok.akurasi, ak=a>=1000?'±'+Math.round(a/1000)+' km':'±'+Math.round(a)+' m';
+    el.innerHTML=PIN+'<div class="lok-t"><small>'+(a>2000?'Perkiraan dari jaringan; di ponsel dengan GPS lebih tepat':'Lokasi Anda')+'</small><b>'+S.lok.lat.toFixed(4)+', '+S.lok.lng.toFixed(4)+'</b></div><span class="akur'+(a>2000?' rendah':'')+'">Akurasi '+ak+'</span>'+tombol;return}
+  el.innerHTML=PIN+'<div class="lok-t"><small>Lokasi Anda • ketuk tombol kanan</small><b>Belum dibaca</b></div>'+tombol;
 }
 
 /* ============ KARTU PENYEDIA ============ */
@@ -501,7 +508,7 @@ function petaSkematis(k,provs){
   if(S.lok&&inb(S.lok.lat,S.lok.lng)) m+='<circle cx="'+X(S.lok.lng).toFixed(1)+'" cy="'+Y(S.lok.lat).toFixed(1)+'" r="8" fill="#FFC72C" stroke="#14201B" stroke-width="3"/>';
   const a=C[0],z=C[C.length-1];
   const lbl=(c,t,anc)=>'<text x="'+X(c[0]).toFixed(1)+'" y="'+(Y(c[1])-14).toFixed(1)+'" text-anchor="'+anc+'">'+esc(t)+'</text>';
-  return '<svg class="peta" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Gambar skematis rute '+esc(k.nama)+'"><polyline points="'+pts+'" fill="none" stroke="#2B3338" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><polyline points="'+pts+'" fill="none" stroke="#FFC72C" stroke-width="2" stroke-dasharray="7 7" stroke-linecap="round" stroke-linejoin="round"/>'
+  return '<svg class="peta" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Gambar skematis rute '+esc(k.nama)+'"><polyline points="'+pts+'" fill="none" stroke="#6B7075" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><polyline points="'+pts+'" fill="none" stroke="#FFC72C" stroke-width="2" stroke-dasharray="7 7" stroke-linecap="round" stroke-linejoin="round"/>'
     +'<circle cx="'+X(a[0]).toFixed(1)+'" cy="'+Y(a[1]).toFixed(1)+'" r="9" fill="#00693E" stroke="#fff" stroke-width="3"/><circle cx="'+X(z[0]).toFixed(1)+'" cy="'+Y(z[1]).toFixed(1)+'" r="9" fill="#C8102E" stroke="#fff" stroke-width="3"/>'
     +lbl(a,k.asal||'Asal','start')+lbl(z,k.tujuan||'Tujuan','end')+m+'</svg>'
     +'<div class="legenda"><span><i style="background:#0B57A4"></i>Kendaraan</span><span><i style="background:#00693E"></i>Makan &amp; istirahat</span><span><i style="background:#C8102E"></i>Darurat &amp; kesehatan</span><span><i style="background:#FFC72C;border:2px solid #14201B;width:6px;height:6px"></i>Posisi Anda</span></div>'

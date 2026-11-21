@@ -1,7 +1,7 @@
 // Service worker RoadMate: menyimpan kerangka aplikasi agar terbuka tanpa internet.
 // Data (CSV Google Sheets) disimpan terpisah oleh index.html di perangkat.
-const VERSI = 'roadmate-v9';
-const INTI = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
+const VERSI = 'roadmate-v12';
+const INTI = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'aset/logo.jpg', 'aset/header-latar.jpg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSI).then(c => c.addAll(INTI)).then(() => self.skipWaiting()));
