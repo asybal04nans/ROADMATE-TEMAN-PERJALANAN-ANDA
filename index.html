@@ -166,7 +166,8 @@ ul.rapi li{margin:4px 0}
     <h2>Privasi</h2>
     <div class="card">
       <ul class="rapi" style="margin:0">
-        <li>Lokasi hanya dibaca saat Anda menekan tombol lokasi, dan jarak dihitung di ponsel Anda. Koordinat tidak dikirim ke server RoadMate.</li>
+        <li>Lokasi hanya dibaca saat Anda menekan tombol lokasi, dan jarak dihitung di ponsel Anda. RoadMate tidak punya server dan tidak menyimpan lokasi Anda.</li>
+        <li>Jika data RoadMate untuk suatu kategori belum ada, aplikasi mencari tempat terdekat dari OpenStreetMap lewat layanan Overpass. Yang dikirim hanya koordinat yang dibulatkan (sekitar 1 km) dan jenis tempat yang dicari.</li>
         <li>Saat Anda menekan tombol Menuju atau Mulai perjalanan, Google Maps terbuka dan berlaku kebijakan Google.</li>
         <li>Tempat tersimpan hanya disimpan di perangkat ini.</li>
       </ul>
@@ -206,7 +207,8 @@ const CONFIG = {
   tampilkanBelumVerifikasi: false,
   batasUsangHari: 180,
   jarakJauhKm: 50,
-  jumlahAwal: 3
+  jumlahAwal: 3,
+  osm: true // bila data RoadMate untuk suatu kategori kosong, cari tempat terdekat dari OpenStreetMap
 };
 
 /* ============ KATEGORI ============ */
@@ -278,7 +280,7 @@ function gmapsCari(q){return 'https://www.google.com/maps/search/?api=1&query='+
 /* ============ STATE & DATA ============ */
 const D={penyedia:[],infojalan:[],koridor:[],kontak:[]};
 const SS={}; // status sumber
-const S={lok:null,kat:'spbu',jml:CONFIG.jumlahAwal,cari:'',tab:'terdekat',koridorId:null,jmlKor:5,
+const S={lok:null,osm:{},kat:'spbu',jml:CONFIG.jumlahAwal,cari:'',tab:'terdekat',koridorId:null,jmlKor:5,
   simpan:new Set((()=>{try{return JSON.parse(localStorage.getItem('rm_simpan')||'[]')}catch(e){return[]}})())};
 
 async function muatSumber(nama){
@@ -343,17 +345,73 @@ function kartu(p){
     +'<span class="tag">'+k.i+' '+esc(k.n)+'</span>'
     +(b?'<span class="tag '+(b.buka===true?'ok':b.buka===false?'bad':'')+'">'+esc(b.teks)+'</span>':'')
     +(p.harga?'<span class="tag">'+esc(p.harga)+'</span>':'')
-    +(p.uji?'<span class="tag warn">data uji</span>':(!p.ok?'<span class="tag warn">belum diverifikasi</span>':''))
+    +(p.osm?'<span class="tag warn">OpenStreetMap • belum diverifikasi</span>':p.uji?'<span class="tag warn">data uji</span>':(!p.ok?'<span class="tag warn">belum diverifikasi</span>':''))
     +(usang?'<span class="tag warn">data mungkin sudah lama</span>':'')
     +'</div></div>'+(p.d!=null?'<div class="jarak">'+fmtJarak(p.d)+'</div>':'')+'</div>'
     +(p.alamat?'<p class="muted">'+esc(p.alamat)+'</p>':'')
     +(p.fasilitas?'<p class="kecil">Fasilitas: '+esc(p.fasilitas)+'</p>':'')
-    +'<div class="sumber">'+(p.sumber?'Sumber: '+esc(p.sumber):'Sumber belum dicantumkan')+(p.upd?' • diperbarui '+fmtTgl(p.upd):'')+'</div>'
+    +'<div class="sumber">'+(p.osm?'Sumber: © kontributor OpenStreetMap (ODbL)':p.sumber?'Sumber: '+esc(p.sumber):'Sumber belum dicantumkan')+(p.upd?' • diperbarui '+fmtTgl(p.upd):'')+'</div>'
     +'<div class="aksi"><a class="btn utama" href="'+nav+'" target="_blank" rel="noopener">Menuju</a>'
     +(t?'<a class="btn" href="tel:'+esc(t)+'">Telepon</a>':'')
     +(w?'<a class="btn" href="https://wa.me/'+w+'" target="_blank" rel="noopener">WhatsApp</a>':'')
-    +'<button class="btn" data-aksi="simpan" data-id="'+esc(p.id)+'" aria-pressed="'+tersimpan+'">'+(tersimpan?'★ Tersimpan':'☆ Simpan')+'</button>'
-    +'<button class="teks" data-aksi="lapor" data-id="'+esc(p.id)+'">Laporkan data keliru</button></div></article>';
+    +(p.osm?'':'<button class="btn" data-aksi="simpan" data-id="'+esc(p.id)+'" aria-pressed="'+tersimpan+'">'+(tersimpan?'★ Tersimpan':'☆ Simpan')+'</button>'
+    +'<button class="teks" data-aksi="lapor" data-id="'+esc(p.id)+'">Laporkan data keliru</button>')+'</div></article>';
+}
+
+/* ============ CADANGAN: OPENSTREETMAP ============ */
+const OSM_F={
+  spbu:['["amenity"="fuel"]'],
+  spklu:['["amenity"="charging_station"]'],
+  bengkel:['["shop"="car_repair"]','["shop"="motorcycle_repair"]'],
+  tambalban:['["shop"="tyres"]'],
+  parkir:['["amenity"="parking"]["access"!="private"]'],
+  makan:['["amenity"="restaurant"]','["amenity"="fast_food"]'],
+  penginapan:['["tourism"~"^(hotel|guest_house|motel|hostel)$"]'],
+  musala:['["amenity"="place_of_worship"]["religion"="muslim"]'],
+  toilet:['["amenity"="toilets"]'],
+  minimarket:['["shop"~"^(convenience|supermarket)$"]'],
+  atm:['["amenity"="atm"]'],
+  rs:['["amenity"="hospital"]'],
+  apotek:['["amenity"="pharmacy"]'],
+  polisi:['["amenity"="police"]']
+};
+const osmKey=k=>S.lok?k+'|'+S.lok.lat.toFixed(2)+','+S.lok.lng.toFixed(2):null;
+function osmDaftar(k){const e=S.osm[osmKey(k)];return e?dgn(e.items):[]}
+function osmMemuat(k){const e=S.osm[osmKey(k)];return !!e&&e.status==='memuat'}
+function osmItem(e,k){
+  const t=e.tags||{}, lat=e.lat!=null?e.lat:(e.center&&e.center.lat), lng=e.lon!=null?e.lon:(e.center&&e.center.lon);
+  if(lat==null||lng==null) return null;
+  const jalan=[t['addr:street'],t['addr:housenumber']].filter(Boolean).join(' ');
+  const alamat=[jalan,t['addr:village']||t['addr:suburb'],t['addr:city']].filter(Boolean).join(', ');
+  const oh=t.opening_hours||'';
+  const jam=oh==='24/7'?'24 jam':(/^\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2}$/.test(oh)?oh:'');
+  const telp=String(t.phone||t['contact:phone']||'').split(';')[0].trim();
+  return {id:'osm'+e.type[0]+e.id,nama:t.name||t['name:id']||t.brand||t.operator||(KAT[k].n+' (tanpa nama)'),kat:k,lat,lng,alamat,telp,wa:t['contact:whatsapp']||'',jam,fasilitas:'',harga:'',sumber:'OpenStreetMap',upd:null,ok:true,osm:true};
+}
+async function ambilOsm(k,key){
+  S.osm[key]={status:'memuat',items:[]}; renderHasil();
+  const la=+S.lok.lat.toFixed(2), ln=+S.lok.lng.toFixed(2);
+  try{
+    let items=[];
+    for(const R of [4000,20000]){
+      const f=OSM_F[k].map(x=>'nwr'+x+'(around:'+R+','+la+','+ln+');').join('');
+      const q='[out:json][timeout:20];('+f+');out center tags 200;';
+      const ctl=new AbortController(), tm=setTimeout(()=>ctl.abort(),25000);
+      const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:ctl.signal});
+      clearTimeout(tm); if(!r.ok) throw new Error(r.status);
+      const j=await r.json(); items=(j.elements||[]).map(e=>osmItem(e,k)).filter(Boolean);
+      if(items.length) break;
+    }
+    S.osm[key]={status:'selesai',items};
+  }catch(e){S.osm[key]={status:'gagal',items:[]}}
+  if(S.tab==='terdekat'&&S.kat===k&&!S.cari.trim()) renderHasil();
+}
+function osmPicu(list){
+  const k=S.kat; if(!CONFIG.osm||!S.lok||!OSM_F[k]) return;
+  const key=osmKey(k); if(S.osm[key]) return;
+  const dekat=list.filter(p=>!p.osm&&p.d!=null&&p.d<=CONFIG.jarakJauhKm).length;
+  if(dekat>=CONFIG.jumlahAwal) return;
+  ambilOsm(k,key);
 }
 
 /* ============ TAB TERDEKAT ============ */
@@ -373,17 +431,24 @@ function renderHasil(){
     list=dgn(semua.filter(p=>(p.nama+' '+(p.alamat||'')+' '+(p.fasilitas||'')).toLowerCase().includes(q)));
   }else{
     judul=esc(kat.n)+' terdekat';
-    list=dgn(semua.filter(p=>p.kat===S.kat));
+    list=dgn(semua.filter(p=>p.kat===S.kat)).concat(osmDaftar(S.kat));
   }
   let h='<div class="baris" style="justify-content:space-between;margin-top:6px"><h2 style="margin:8px 0">'+judul+'</h2></div>';
   if(!S.lok&&list.length) h+='<div class="card kecil muted">Aktifkan lokasi agar daftar diurutkan dari yang terdekat.</div>';
   const tamp=list.slice(0,S.jml);
   h+=tamp.map(kartu).join('');
+  const eo=S.osm[osmKey(S.kat)];
+  if(!q&&eo){
+    if(eo.status==='memuat') h+='<div class="card kecil muted">Mencari tempat terdekat dari OpenStreetMap…</div>';
+    else if(eo.status==='gagal') h+='<div class="card kecil">Pencarian tambahan gagal. Periksa koneksi internet. <button class="btn kecil" data-aksi="osmUlang">Coba lagi</button></div>';
+    else if(eo.items.length) h+='<p class="kecil muted">Daftar bertanda OpenStreetMap berasal dari peta terbuka dan belum diverifikasi RoadMate. Periksa jam buka sebelum berangkat. © kontributor <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>.</p>';
+  }
   if(list.length>S.jml) h+='<div style="text-align:center;margin:10px 0"><button class="btn" data-aksi="tambah">Tambah ('+(list.length-S.jml)+' lagi)</button></div>';
   if(S.lok&&tamp.length&&tamp[0].d!=null&&tamp[0].d>CONFIG.jarakJauhKm) h+='<div class="card kecil">Penyedia terdekat di daftar ini berjarak lebih dari '+CONFIG.jarakJauhKm+' km. Coba cari lewat Google Maps untuk hasil yang lebih dekat.</div>';
-  if(!list.length) h+='<div class="card"><b>'+(q?'Tidak ada hasil untuk pencarian ini.':'Belum ada data terverifikasi untuk '+esc(kat.n.toLowerCase())+'.')+'</b><p class="muted kecil" style="margin:6px 0 0">Sementara, cari langsung di Google Maps.</p></div>';
+  if(!list.length&&!osmMemuat(S.kat)) h+='<div class="card"><b>'+(q?'Tidak ada hasil untuk pencarian ini.':'Belum ada data terverifikasi untuk '+esc(kat.n.toLowerCase())+'.')+'</b><p class="muted kecil" style="margin:6px 0 0">Sementara, cari langsung di Google Maps.</p></div>';
   if(!q) h+='<div style="margin:10px 0"><a class="btn kuning" style="width:100%" target="_blank" rel="noopener" href="'+gmapsCari(kat.q)+'">Cari '+esc(kat.n.toLowerCase())+' di Google Maps</a></div>';
   el.innerHTML=h;
+  if(!q) osmPicu(list);
 }
 function renderPeringatan(){
   const e=$('#peringatan');
@@ -513,6 +578,7 @@ document.addEventListener('click',e=>{
   if(a==='lokasi') mintaLokasi();
   else if(a==='kat'){S.kat=t.dataset.k;S.cari='';$('#cari').value='';S.jml=CONFIG.jumlahAwal;renderUbin();renderHasil()}
   else if(a==='keKat'){S.kat=t.dataset.k;S.cari='';$('#cari').value='';S.jml=CONFIG.jumlahAwal;keTab('terdekat');renderUbin();renderHasil()}
+  else if(a==='osmUlang'){delete S.osm[osmKey(S.kat)];renderHasil()}
   else if(a==='tambah'){S.jml+=CONFIG.jumlahAwal;renderHasil()}
   else if(a==='tambahKor'){S.jmlKor+=5;renderKoridor()}
   else if(a==='simpan'){S.simpan.has(id)?S.simpan.delete(id):S.simpan.add(id);try{localStorage.setItem('rm_simpan',JSON.stringify([...S.simpan]))}catch(_){}renderHasil();renderKoridor();renderSimpan()}

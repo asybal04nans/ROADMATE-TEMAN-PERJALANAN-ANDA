@@ -53,6 +53,10 @@ Buka alamat situs di Chrome → menu ⋮ → **Pasang aplikasi** (atau Tambahkan
 - Data: ubah isi Google Sheets. Aplikasi mengambil data terbaru saat dibuka (tautan terbitan bisa tertunda beberapa menit).
 - Tampilan: ganti berkas di GitHub. Bila perubahan belum muncul, tutup aplikasi lalu buka lagi dua kali. Naikkan nomor `VERSI` di `sw.js` agar cache lama dibuang.
 
+## Cadangan dari OpenStreetMap
+
+Saat ikon kategori diklik dan data terverifikasi Anda di sekitar lokasi pengguna kurang dari 3 tempat (dalam radius `jarakJauhKm`), aplikasi otomatis mencari tempat terdekat dari OpenStreetMap lewat layanan Overpass. Hasilnya diberi tanda "OpenStreetMap • belum diverifikasi" dan atribusi © kontributor OpenStreetMap (lisensi ODbL). Yang dikirim hanya koordinat yang dibulatkan (sekitar 1 km) dan jenis tempat. Hasil disimpan sementara agar tidak mencari ulang. Kategori derek tidak punya data yang andal di OpenStreetMap, jadi tetap memakai tombol Google Maps. Untuk mematikan fitur ini, ubah `osm: true` menjadi `osm: false` di `CONFIG`. Layanan Overpass publik punya batas pemakaian wajar; bila pengguna sudah banyak, pertimbangkan mengandalkan data Google Sheets sendiri.
+
 ## Alat uji data
 
 Tab Info → "Untuk pengelola data": tempel baris CSV penyedia untuk mencoba tanpa mengubah Google Sheets. Data uji hanya tersimpan di perangkat itu dan diberi tanda "data uji". Hapus lewat tombol di bawahnya.
