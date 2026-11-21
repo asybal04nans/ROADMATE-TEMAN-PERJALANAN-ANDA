@@ -214,7 +214,7 @@ const KATEGORI = [
   {k:'spbu',n:'SPBU',i:'⛽',q:'SPBU',g:'kendaraan'},
   {k:'spklu',n:'Pengisian listrik',i:'🔌',q:'SPKLU pengisian mobil listrik',g:'kendaraan'},
   {k:'bengkel',n:'Bengkel',i:'🔧',q:'bengkel motor mobil',g:'kendaraan'},
-  {k:'tambalban',n:'Tambal ban',i:'🛞',q:'tambal ban',g:'kendaraan'},
+  {k:'tambalban',n:'Tambal ban',i:'⭕',q:'tambal ban',g:'kendaraan'},
   {k:'derek',n:'Derek',i:'🚛',q:'derek mobil',g:'kendaraan'},
   {k:'parkir',n:'Parkir',i:'🅿️',q:'parkir',g:'kendaraan'},
   {k:'makan',n:'Tempat makan',i:'🍜',q:'rumah makan',g:'istirahat'},
@@ -327,7 +327,8 @@ function mintaLokasi(){
 function renderLokasi(){
   const el=$('#lokbar');
   if(S.mencari){el.innerHTML='<div><b>Mencari lokasi…</b><span class="muted kecil">Tunggu beberapa detik</span></div>';return}
-  if(S.lok){el.innerHTML='<div><b>Lokasi terbaca</b><span class="muted kecil">Akurasi sekitar '+Math.round(S.lok.akurasi)+' m • diperbarui '+new Date(S.lok.t).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})+'</span></div><button class="btn kecil" data-aksi="lokasi">Perbarui</button>';return}
+  if(S.lok){const ak=S.lok.akurasi>2000?'Akurasi rendah (sekitar '+Math.round(S.lok.akurasi/1000)+' km). Komputer memperkirakan lokasi dari jaringan; di ponsel dengan GPS hasilnya lebih tepat.':'Akurasi sekitar '+Math.round(S.lok.akurasi)+' m';
+  el.innerHTML='<div><b>Lokasi terbaca</b><span class="muted kecil">'+ak+' • diperbarui '+new Date(S.lok.t).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})+'</span></div><button class="btn kecil" data-aksi="lokasi">Perbarui</button>';return}
   el.innerHTML='<div><b>Aktifkan lokasi untuk melihat yang terdekat</b><span class="muted kecil">Jarak dihitung di ponsel Anda</span></div><button class="btn utama" data-aksi="lokasi">Gunakan lokasi saya</button>';
 }
 
